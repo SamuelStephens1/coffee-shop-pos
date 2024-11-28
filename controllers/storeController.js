@@ -1,4 +1,4 @@
-const db = require('../../Database/db');
+const db = require('../Database/db');
 
 // Get all stores
 const getAllStores = async (req, res) => {
