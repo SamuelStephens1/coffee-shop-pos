@@ -1,9 +1,10 @@
 const express = require('express'); // Import express
 const app = express(); // Initialize app
+require('dotenv').config();
 const cors = require('cors');
 app.use(cors());
 
-const PORT = process.env.PORT || 3001; // Change to 3001
+const PORT = process.env.PORT || 3001; // Changed to 3001
 
 const apiRoutes = require('./routes/api'); // No changes needed if it's correct.
 

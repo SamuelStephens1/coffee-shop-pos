@@ -1,16 +1,21 @@
 const db = require('../Database/db');
 
 // Get all products
-exports.getAllProducts = async (req, res) => {
+ exports.getAllProducts = async (req, res) => {
     try {
-        const [products] = await db.query('SELECT * FROM product');
-        res.json(products);
+      const [rows] = await db.query("SELECT * FROM product");
+      // Parse prod_price to a number
+      const parsedProducts = rows.map(product => ({
+        ...product,
+        prod_price: parseFloat(product.prod_price),
+      }));
+      res.json(parsedProducts);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch products' });
+      console.error(error);
+      res.status(500).send("Server error");
     }
-};
-
+  };
+  
 // Add a new product
 exports.addProduct = async (req, res) => {
     const { prod_name, prod_desc, prod_price, prod_type, prod_ingredients, prod_calories, isdairyfree, isglutenfree, isvegetarian, isvegan, isnutfree, issugarfree, isseasonal, store_id } = req.body;
