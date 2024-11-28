@@ -2,40 +2,18 @@ import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
-  Grid,
+  Box,
   Card,
   CardContent,
   Button,
-  Box,
   Divider,
-  IconButton,
-  createTheme,
-  ThemeProvider,
 } from "@mui/material";
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#388e3c", // Green
-    },
-    secondary: {
-      main: "#000000", // Black
-    },
-    background: {
-      default: "#f5f5f5", // Light gray for background
-    },
-  },
-  typography: {
-    fontFamily: "Arial, sans-serif",
-  },
-});
 
 const App = () => {
   const [products, setProducts] = useState([]);
   const [orderItems, setOrderItems] = useState([]);
   const taxRate = 0.0975; // 9.75% sales tax
 
-  // Fetch product data from the backend
   useEffect(() => {
     fetch("/api/products")
       .then((response) => {
@@ -44,17 +22,13 @@ const App = () => {
         }
         return response.json();
       })
-      .then((data) => {
-        setProducts(data);
-      })
+      .then((data) => setProducts(data))
       .catch((error) => console.error("Error fetching products:", error));
   }, []);
 
   const addToOrder = (product) => {
     setOrderItems((prevItems) => {
-      const existingItem = prevItems.find(
-        (item) => item.prod_id === product.prod_id
-      );
+      const existingItem = prevItems.find((item) => item.prod_id === product.prod_id);
       if (existingItem) {
         return prevItems.map((item) =>
           item.prod_id === product.prod_id
@@ -83,141 +57,145 @@ const App = () => {
   };
 
   const calculateSubtotal = () =>
-    orderItems.reduce(
-      (total, item) => total + item.prod_price * item.quantity,
-      0
-    );
+    orderItems.reduce((total, item) => total + item.prod_price * item.quantity, 0);
 
   const calculateTax = () => calculateSubtotal() * taxRate;
 
   const calculateTotal = () => calculateSubtotal() + calculateTax();
 
-  const cardSize = Math.min(200, Math.max(140, 900 / products.length));
-  const fontSize = Math.min(22, Math.max(14, 50 / products.length));
+  const dynamicStyles = {
+    cardWidth: `calc((100% - ${Math.min(products.length, 5) * 10}px) / ${
+      Math.min(products.length, 5)
+    })`,
+    fontSize: `${Math.min(20, 100 / products.length)}px`,
+    buttonSize: `${Math.min(30, 150 / products.length)}px`,
+  };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Container
+    <Container
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        marginTop: "20px",
+        background: "linear-gradient(to bottom right, #f1ebe1, #d5c6b1)",
+        padding: "20px",
+        borderRadius: "10px",
+        height: "100vh",
+      }}
+    >
+      {/* Title */}
+      <Typography
+        variant="h4"
+        align="center"
+        gutterBottom
         style={{
-          display: "grid",
-          gridTemplateColumns: "3fr 1fr",
+          marginBottom: "20px",
+          fontWeight: "bold",
+          color: "#4A4A4A",
+        }}
+      >
+        Order Entry
+      </Typography>
+
+      {/* Main Content */}
+      <Box
+        style={{
+          display: "flex",
+          flexDirection: "row",
           gap: "20px",
-          marginTop: "20px",
-          height: "100vh",
-          backgroundColor: theme.palette.background.default,
-          padding: "20px",
-          borderRadius: "8px",
+          width: "100%",
+          height: "calc(100% - 80px)",
         }}
       >
         {/* Product List */}
         <Box
           style={{
+            flex: 3,
             display: "grid",
-            gridTemplateColumns: `repeat(auto-fit, minmax(${cardSize}px, 1fr))`,
-            gap: "16px",
-            alignContent: "start",
+            gridTemplateColumns: `repeat(auto-fit, ${dynamicStyles.cardWidth})`,
+            gap: "20px",
           }}
         >
-          <Typography
-            variant="h3"
-            gutterBottom
-            style={{
-              fontSize: `${fontSize}px`,
-              gridColumn: "1/-1",
-              textAlign: "center",
-              color: theme.palette.primary.main,
-              fontWeight: "bold",
-            }}
-          >
-            Coffee Shop Products
-          </Typography>
           {products.map((product) => {
-            const inOrder = orderItems.find(
-              (item) => item.prod_id === product.prod_id
-            );
+            const inOrder = orderItems.find((item) => item.prod_id === product.prod_id);
 
             return (
               <Card
                 key={product.prod_id}
                 style={{
-                  height: `${cardSize * 1.3}px`,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  textAlign: "center",
-                  backgroundColor: "#ffffff",
+                  padding: "10px",
+                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                  borderRadius: "8px",
                 }}
-                elevation={3}
               >
                 <CardContent>
                   <Typography
                     variant="h6"
-                    style={{
-                      fontSize: `${fontSize * 0.8}px`,
-                      textOverflow: "ellipsis",
-                      overflow: "hidden",
-                      whiteSpace: "nowrap",
-                      fontWeight: "bold",
-                    }}
+                    align="center"
+                    style={{ fontSize: dynamicStyles.fontSize }}
                   >
                     {product.prod_name}
                   </Typography>
                   <Typography
-                    variant="body1"
-                    style={{ fontSize: `${fontSize * 0.7}px`, color: "#000" }}
+                    align="center"
+                    style={{ fontSize: dynamicStyles.fontSize }}
                   >
                     ${product.prod_price.toFixed(2)}
                   </Typography>
                   <Typography
                     variant="body2"
-                    style={{
-                      fontSize: `${fontSize * 0.6}px`,
-                      textOverflow: "ellipsis",
-                      overflow: "hidden",
-                      whiteSpace: "nowrap",
-                      color: "#555",
-                    }}
+                    color="textSecondary"
+                    align="center"
+                    style={{ fontSize: dynamicStyles.fontSize }}
                   >
                     {product.prod_desc}
                   </Typography>
-                </CardContent>
-                <Box style={{ paddingBottom: "10px" }}>
-                  {inOrder ? (
-                    <Box
-                      display="flex"
-                      justifyContent="center"
-                      alignItems="center"
-                    >
-                      <IconButton
-                        onClick={() => removeOneItem(product.prod_id)}
-                        color="secondary"
-                      >
-                        <span style={{ fontWeight: "bold", fontSize: "20px" }}>
+                  <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    gap="10px"
+                    marginTop="10px"
+                  >
+                    {inOrder ? (
+                      <>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          size="small"
+                          style={{ fontSize: dynamicStyles.buttonSize }}
+                          onClick={() => removeOneItem(product.prod_id)}
+                        >
                           -
-                        </span>
-                      </IconButton>
-                      <Typography style={{ margin: "0 10px" }}>
-                        x{inOrder.quantity}
-                      </Typography>
-                      <IconButton
-                        onClick={() => addToOrder(product)}
-                        color="primary"
-                      >
-                        <span style={{ fontWeight: "bold", fontSize: "20px" }}>
+                        </Button>
+                        <Typography>x{inOrder.quantity}</Typography>
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          style={{ fontSize: dynamicStyles.buttonSize }}
+                          onClick={() => addToOrder(product)}
+                        >
                           +
-                        </span>
-                      </IconButton>
-                    </Box>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => addToOrder(product)}
-                    >
-                      Add
-                    </Button>
-                  )}
-                </Box>
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        style={{
+                          display: "block",
+                          margin: "0 auto",
+                          fontSize: dynamicStyles.buttonSize,
+                        }}
+                        onClick={() => addToOrder(product)}
+                      >
+                        Add
+                      </Button>
+                    )}
+                  </Box>
+                </CardContent>
               </Card>
             );
           })}
@@ -226,22 +204,16 @@ const App = () => {
         {/* Order Summary */}
         <Box
           style={{
-            border: `2px solid ${theme.palette.primary.main}`,
+            flex: 1,
             padding: "20px",
-            borderRadius: "8px",
-            alignSelf: "flex-start",
             backgroundColor: "#ffffff",
+            borderRadius: "8px",
+            boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+            alignSelf: "flex-start",
+            height: "fit-content",
           }}
         >
-          <Typography
-            variant="h5"
-            gutterBottom
-            style={{
-              fontSize: `${fontSize}px`,
-              color: theme.palette.primary.main,
-              fontWeight: "bold",
-            }}
-          >
+          <Typography variant="h5" gutterBottom align="center" color="green">
             Order Summary
           </Typography>
           {orderItems.length > 0 ? (
@@ -253,9 +225,8 @@ const App = () => {
                   justifyContent="space-between"
                   marginBottom="10px"
                 >
-                  <Typography style={{ fontSize: `${fontSize * 0.7}px` }}>
-                    {item.prod_name} (${item.prod_price.toFixed(2)}) x
-                    {item.quantity}
+                  <Typography>
+                    {item.prod_name} (${item.prod_price.toFixed(2)}) x{item.quantity}
                   </Typography>
                 </Box>
               ))}
@@ -271,11 +242,11 @@ const App = () => {
               </Typography>
             </>
           ) : (
-            <Typography>No items in order.</Typography>
+            <Typography align="center">No items in order.</Typography>
           )}
         </Box>
-      </Container>
-    </ThemeProvider>
+      </Box>
+    </Container>
   );
 };
 
