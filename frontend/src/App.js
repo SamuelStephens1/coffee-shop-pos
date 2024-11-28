@@ -9,7 +9,26 @@ import {
   Box,
   Divider,
   IconButton,
+  createTheme,
+  ThemeProvider,
 } from "@mui/material";
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#388e3c", // Green
+    },
+    secondary: {
+      main: "#000000", // Black
+    },
+    background: {
+      default: "#f5f5f5", // Light gray for background
+    },
+  },
+  typography: {
+    fontFamily: "Arial, sans-serif",
+  },
+});
 
 const App = () => {
   const [products, setProducts] = useState([]);
@@ -33,7 +52,9 @@ const App = () => {
 
   const addToOrder = (product) => {
     setOrderItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.prod_id === product.prod_id);
+      const existingItem = prevItems.find(
+        (item) => item.prod_id === product.prod_id
+      );
       if (existingItem) {
         return prevItems.map((item) =>
           item.prod_id === product.prod_id
@@ -62,134 +83,199 @@ const App = () => {
   };
 
   const calculateSubtotal = () =>
-    orderItems.reduce((total, item) => total + item.prod_price * item.quantity, 0);
+    orderItems.reduce(
+      (total, item) => total + item.prod_price * item.quantity,
+      0
+    );
 
   const calculateTax = () => calculateSubtotal() * taxRate;
 
   const calculateTotal = () => calculateSubtotal() + calculateTax();
 
+  const cardSize = Math.min(200, Math.max(140, 900 / products.length));
+  const fontSize = Math.min(22, Math.max(14, 50 / products.length));
+
   return (
-    <Container
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "stretch",
-        height: "100vh",
-        padding: "20px",
-      }}
-    >
-      {/* Product List */}
-      <Box
+    <ThemeProvider theme={theme}>
+      <Container
         style={{
-          flex: 3,
-          overflowY: "auto",
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "16px",
-          alignItems: "start",
+          gridTemplateColumns: "3fr 1fr",
+          gap: "20px",
+          marginTop: "20px",
+          height: "100vh",
+          backgroundColor: theme.palette.background.default,
+          padding: "20px",
+          borderRadius: "8px",
         }}
       >
-        <Typography
-          variant="h4"
-          style={{ textAlign: "center", marginBottom: "10px", gridColumn: "1 / -1" }}
+        {/* Product List */}
+        <Box
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(auto-fit, minmax(${cardSize}px, 1fr))`,
+            gap: "16px",
+            alignContent: "start",
+          }}
         >
-          Coffee Shop Products
-        </Typography>
-        {products.map((product) => {
-          const inOrder = orderItems.find((item) => item.prod_id === product.prod_id);
+          <Typography
+            variant="h3"
+            gutterBottom
+            style={{
+              fontSize: `${fontSize}px`,
+              gridColumn: "1/-1",
+              textAlign: "center",
+              color: theme.palette.primary.main,
+              fontWeight: "bold",
+            }}
+          >
+            Coffee Shop Products
+          </Typography>
+          {products.map((product) => {
+            const inOrder = orderItems.find(
+              (item) => item.prod_id === product.prod_id
+            );
 
-          return (
-            <Card key={product.prod_id}>
-              <CardContent style={{ textAlign: "center" }}>
-                <Typography variant="h6">{product.prod_name}</Typography>
-                <Typography variant="body1">
-                  ${product.prod_price.toFixed(2)}
-                </Typography>
-                <Typography variant="body2">{product.prod_desc}</Typography>
-                {inOrder ? (
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    marginTop="10px"
-                  >
-                    <IconButton
-                      onClick={() => removeOneItem(product.prod_id)}
-                      color="error"
-                    >
-                      <span>-</span>
-                    </IconButton>
-                    <Typography style={{ margin: "0 10px" }}>
-                      x{inOrder.quantity}
-                    </Typography>
-                    <IconButton
-                      onClick={() => addToOrder(product)}
-                      color="success"
-                    >
-                      <span>+</span>
-                    </IconButton>
-                  </Box>
-                ) : (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    style={{ marginTop: "10px" }}
-                    onClick={() => addToOrder(product)}
-                  >
-                    Add
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </Box>
-
-      {/* Order Summary */}
-      <Box
-        style={{
-          flex: 1,
-          border: "1px solid black",
-          padding: "10px",
-          borderRadius: "5px",
-          overflowY: "auto",
-          maxHeight: "100%",
-        }}
-      >
-        <Typography variant="h5" gutterBottom>
-          Order Summary
-        </Typography>
-        {orderItems.length > 0 ? (
-          <>
-            {orderItems.map((item) => (
-              <Box
-                key={item.prod_id}
-                display="flex"
-                justifyContent="space-between"
-                marginBottom="10px"
+            return (
+              <Card
+                key={product.prod_id}
+                style={{
+                  height: `${cardSize * 1.3}px`,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  textAlign: "center",
+                  backgroundColor: "#ffffff",
+                }}
+                elevation={3}
               >
-                <Typography>
-                  {item.prod_name} (${item.prod_price.toFixed(2)}) x{item.quantity}
-                </Typography>
-              </Box>
-            ))}
-            <Divider style={{ margin: "10px 0" }} />
-            <Typography variant="body1">
-              Subtotal: ${calculateSubtotal().toFixed(2)}
-            </Typography>
-            <Typography variant="body1">
-              Tax: ${calculateTax().toFixed(2)}
-            </Typography>
-            <Typography variant="h6" style={{ marginTop: "10px" }}>
-              Total: ${calculateTotal().toFixed(2)}
-            </Typography>
-          </>
-        ) : (
-          <Typography>No items in order.</Typography>
-        )}
-      </Box>
-    </Container>
+                <CardContent>
+                  <Typography
+                    variant="h6"
+                    style={{
+                      fontSize: `${fontSize * 0.8}px`,
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {product.prod_name}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    style={{ fontSize: `${fontSize * 0.7}px`, color: "#000" }}
+                  >
+                    ${product.prod_price.toFixed(2)}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    style={{
+                      fontSize: `${fontSize * 0.6}px`,
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      color: "#555",
+                    }}
+                  >
+                    {product.prod_desc}
+                  </Typography>
+                </CardContent>
+                <Box style={{ paddingBottom: "10px" }}>
+                  {inOrder ? (
+                    <Box
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                    >
+                      <IconButton
+                        onClick={() => removeOneItem(product.prod_id)}
+                        color="secondary"
+                      >
+                        <span style={{ fontWeight: "bold", fontSize: "20px" }}>
+                          -
+                        </span>
+                      </IconButton>
+                      <Typography style={{ margin: "0 10px" }}>
+                        x{inOrder.quantity}
+                      </Typography>
+                      <IconButton
+                        onClick={() => addToOrder(product)}
+                        color="primary"
+                      >
+                        <span style={{ fontWeight: "bold", fontSize: "20px" }}>
+                          +
+                        </span>
+                      </IconButton>
+                    </Box>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => addToOrder(product)}
+                    >
+                      Add
+                    </Button>
+                  )}
+                </Box>
+              </Card>
+            );
+          })}
+        </Box>
+
+        {/* Order Summary */}
+        <Box
+          style={{
+            border: `2px solid ${theme.palette.primary.main}`,
+            padding: "20px",
+            borderRadius: "8px",
+            alignSelf: "flex-start",
+            backgroundColor: "#ffffff",
+          }}
+        >
+          <Typography
+            variant="h5"
+            gutterBottom
+            style={{
+              fontSize: `${fontSize}px`,
+              color: theme.palette.primary.main,
+              fontWeight: "bold",
+            }}
+          >
+            Order Summary
+          </Typography>
+          {orderItems.length > 0 ? (
+            <>
+              {orderItems.map((item) => (
+                <Box
+                  key={item.prod_id}
+                  display="flex"
+                  justifyContent="space-between"
+                  marginBottom="10px"
+                >
+                  <Typography style={{ fontSize: `${fontSize * 0.7}px` }}>
+                    {item.prod_name} (${item.prod_price.toFixed(2)}) x
+                    {item.quantity}
+                  </Typography>
+                </Box>
+              ))}
+              <Divider style={{ margin: "10px 0" }} />
+              <Typography variant="body1">
+                Subtotal: ${calculateSubtotal().toFixed(2)}
+              </Typography>
+              <Typography variant="body1">
+                Tax: ${calculateTax().toFixed(2)}
+              </Typography>
+              <Typography variant="h6" style={{ marginTop: "10px" }}>
+                Total: ${calculateTotal().toFixed(2)}
+              </Typography>
+            </>
+          ) : (
+            <Typography>No items in order.</Typography>
+          )}
+        </Box>
+      </Container>
+    </ThemeProvider>
   );
 };
 
