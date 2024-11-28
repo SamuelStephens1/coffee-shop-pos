@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
-  Box,
+  Grid,
   Card,
   CardContent,
   Button,
+  Box,
   Divider,
 } from "@mui/material";
 
@@ -16,12 +17,7 @@ const App = () => {
 
   useEffect(() => {
     fetch("/api/products")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
+      .then((response) => response.json())
       .then((data) => setProducts(data))
       .catch((error) => console.error("Error fetching products:", error));
   }, []);
@@ -41,19 +37,10 @@ const App = () => {
     });
   };
 
-  const removeOneItem = (productId) => {
-    setOrderItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.prod_id === productId);
-      if (existingItem && existingItem.quantity > 1) {
-        return prevItems.map((item) =>
-          item.prod_id === productId
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        );
-      } else {
-        return prevItems.filter((item) => item.prod_id !== productId);
-      }
-    });
+  const removeFromOrder = (productId) => {
+    setOrderItems((prevItems) =>
+      prevItems.filter((item) => item.prod_id !== productId)
+    );
   };
 
   const calculateSubtotal = () =>
@@ -63,188 +50,96 @@ const App = () => {
 
   const calculateTotal = () => calculateSubtotal() + calculateTax();
 
-  const dynamicStyles = {
-    cardWidth: `calc((100% - ${Math.min(products.length, 5) * 10}px) / ${
-      Math.min(products.length, 5)
-    })`,
-    fontSize: `${Math.min(20, 100 / products.length)}px`,
-    buttonSize: `${Math.min(30, 150 / products.length)}px`,
-  };
-
   return (
     <Container
       style={{
         display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
+        justifyContent: "space-between",
         marginTop: "20px",
-        background: "linear-gradient(to bottom right, #f1ebe1, #d5c6b1)",
-        padding: "20px",
-        borderRadius: "10px",
-        height: "100vh",
       }}
     >
-      {/* Title */}
-      <Typography
-        variant="h4"
-        align="center"
-        gutterBottom
-        style={{
-          marginBottom: "20px",
-          fontWeight: "bold",
-          color: "#4A4A4A",
-        }}
-      >
-        Order Entry
-      </Typography>
-
-      {/* Main Content */}
-      <Box
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: "20px",
-          width: "100%",
-          height: "calc(100% - 80px)",
-        }}
-      >
-        {/* Product List */}
-        <Box
-          style={{
-            flex: 3,
-            display: "grid",
-            gridTemplateColumns: `repeat(auto-fit, ${dynamicStyles.cardWidth})`,
-            gap: "20px",
-          }}
-        >
-          {products.map((product) => {
-            const inOrder = orderItems.find((item) => item.prod_id === product.prod_id);
-
-            return (
-              <Card
-                key={product.prod_id}
-                style={{
-                  padding: "10px",
-                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-                  borderRadius: "8px",
-                }}
-              >
-                <CardContent>
-                  <Typography
-                    variant="h6"
-                    align="center"
-                    style={{ fontSize: dynamicStyles.fontSize }}
-                  >
+      {/* Product List */}
+      <Box style={{ flex: 3 }}>
+        <Typography variant="h3" gutterBottom style={{ textAlign: "center" }}>
+          Order Entry
+        </Typography>
+        <Grid container spacing={3}>
+          {products.map((product) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={product.prod_id}>
+              <Card style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                <CardContent style={{ flexGrow: 1 }}>
+                  <Typography variant="h6" gutterBottom>
                     {product.prod_name}
                   </Typography>
-                  <Typography
-                    align="center"
-                    style={{ fontSize: dynamicStyles.fontSize }}
-                  >
+                  <Typography variant="body1" gutterBottom>
                     ${product.prod_price.toFixed(2)}
                   </Typography>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    align="center"
-                    style={{ fontSize: dynamicStyles.fontSize }}
+                  <Button
+                    variant="contained"
+                    color="success"
+                    fullWidth
+                    onClick={() => addToOrder(product)}
                   >
-                    {product.prod_desc}
-                  </Typography>
-                  <Box
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    gap="10px"
-                    marginTop="10px"
-                  >
-                    {inOrder ? (
-                      <>
-                        <Button
-                          variant="contained"
-                          color="error"
-                          size="small"
-                          style={{ fontSize: dynamicStyles.buttonSize }}
-                          onClick={() => removeOneItem(product.prod_id)}
-                        >
-                          -
-                        </Button>
-                        <Typography>x{inOrder.quantity}</Typography>
-                        <Button
-                          variant="contained"
-                          color="success"
-                          size="small"
-                          style={{ fontSize: dynamicStyles.buttonSize }}
-                          onClick={() => addToOrder(product)}
-                        >
-                          +
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="contained"
-                        color="success"
-                        style={{
-                          display: "block",
-                          margin: "0 auto",
-                          fontSize: dynamicStyles.buttonSize,
-                        }}
-                        onClick={() => addToOrder(product)}
-                      >
-                        Add
-                      </Button>
-                    )}
-                  </Box>
+                    ADD
+                  </Button>
                 </CardContent>
               </Card>
-            );
-          })}
-        </Box>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
 
-        {/* Order Summary */}
-        <Box
-          style={{
-            flex: 1,
-            padding: "20px",
-            backgroundColor: "#ffffff",
-            borderRadius: "8px",
-            boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-            alignSelf: "flex-start",
-            height: "fit-content",
-          }}
-        >
-          <Typography variant="h5" gutterBottom align="center" color="green">
-            Order Summary
-          </Typography>
-          {orderItems.length > 0 ? (
-            <>
-              {orderItems.map((item) => (
-                <Box
-                  key={item.prod_id}
-                  display="flex"
-                  justifyContent="space-between"
-                  marginBottom="10px"
+      {/* Order Summary */}
+      <Box
+        style={{
+          flex: 1,
+          marginLeft: "20px",
+          border: "1px solid #ccc",
+          borderRadius: "8px",
+          padding: "20px",
+          height: "fit-content",
+          alignSelf: "flex-start",
+        }}
+      >
+        <Typography variant="h5" gutterBottom style={{ textAlign: "center", color: "green" }}>
+          Order Summary
+        </Typography>
+        {orderItems.length > 0 ? (
+          <>
+            {orderItems.map((item) => (
+              <Box
+                key={item.prod_id}
+                display="flex"
+                justifyContent="space-between"
+                marginBottom="10px"
+              >
+                <Typography>
+                  {item.prod_name} (${item.prod_price.toFixed(2)}) x{item.quantity}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  onClick={() => removeFromOrder(item.prod_id)}
                 >
-                  <Typography>
-                    {item.prod_name} (${item.prod_price.toFixed(2)}) x{item.quantity}
-                  </Typography>
-                </Box>
-              ))}
-              <Divider style={{ margin: "10px 0" }} />
-              <Typography variant="body1">
-                Subtotal: ${calculateSubtotal().toFixed(2)}
-              </Typography>
-              <Typography variant="body1">
-                Tax: ${calculateTax().toFixed(2)}
-              </Typography>
-              <Typography variant="h6" style={{ marginTop: "10px" }}>
-                Total: ${calculateTotal().toFixed(2)}
-              </Typography>
-            </>
-          ) : (
-            <Typography align="center">No items in order.</Typography>
-          )}
-        </Box>
+                  Remove
+                </Button>
+              </Box>
+            ))}
+            <Divider style={{ margin: "10px 0" }} />
+            <Typography variant="body1">
+              Subtotal: ${calculateSubtotal().toFixed(2)}
+            </Typography>
+            <Typography variant="body1">
+              Tax: ${calculateTax().toFixed(2)}
+            </Typography>
+            <Typography variant="h6" style={{ marginTop: "10px" }}>
+              Total: ${calculateTotal().toFixed(2)}
+            </Typography>
+          </>
+        ) : (
+          <Typography>No items in order.</Typography>
+        )}
       </Box>
     </Container>
   );
