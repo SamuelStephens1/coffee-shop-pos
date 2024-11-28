@@ -1,45 +1,57 @@
-// Dummy data to simulate a database
-let products = [
-    { id: 1, name: 'Coffee', price: 2.5 },
-    { id: 2, name: 'Tea', price: 1.8 },
-  ];
-  
-  // Get All Products
-  exports.getAllProducts = (req, res) => {
-    res.json(products);
-  };
-  
-  // Add Product
-  exports.addProduct = (req, res) => {
-    const newProduct = req.body; // Assuming the product comes in the request body
-    newProduct.id = products.length + 1; // Simulate auto-increment ID
-    products.push(newProduct);
-    res.status(201).json(newProduct);
-  };
-  
-  // Update Product
-  exports.updateProduct = (req, res) => {
-    const productId = parseInt(req.params.id, 10);
-    const productIndex = products.findIndex(p => p.id === productId);
-  
-    if (productIndex !== -1) {
-      products[productIndex] = { ...products[productIndex], ...req.body };
-      res.json(products[productIndex]);
-    } else {
-      res.status(404).json({ message: 'Product not found' });
+const db = require('../Database/db');
+
+// Get all products
+exports.getAllProducts = async (req, res) => {
+    try {
+        const [products] = await db.query('SELECT * FROM product');
+        res.json(products);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch products' });
     }
-  };
-  
-  // Delete Product
-  exports.deleteProduct = (req, res) => {
-    const productId = parseInt(req.params.id, 10);
-    const productIndex = products.findIndex(p => p.id === productId);
-  
-    if (productIndex !== -1) {
-      const deletedProduct = products.splice(productIndex, 1);
-      res.json(deletedProduct);
-    } else {
-      res.status(404).json({ message: 'Product not found' });
+};
+
+// Add a new product
+exports.addProduct = async (req, res) => {
+    const { prod_name, prod_desc, prod_price, prod_type, prod_ingredients, prod_calories, isdairyfree, isglutenfree, isvegetarian, isvegan, isnutfree, issugarfree, isseasonal, store_id } = req.body;
+    try {
+        const query = `
+            INSERT INTO product 
+            (prod_name, prod_desc, prod_price, prod_type, prod_ingredients, prod_calories, isdairyfree, isglutenfree, isvegetarian, isvegan, isnutfree, issugarfree, isseasonal, store_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        await db.query(query, [prod_name, prod_desc, prod_price, prod_type, prod_ingredients, prod_calories, isdairyfree, isglutenfree, isvegetarian, isvegan, isnutfree, issugarfree, isseasonal, store_id]);
+        res.status(201).json({ message: 'Product added successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to add product' });
     }
-  };
-  
+};
+
+// Update a product
+exports.updateProduct = async (req, res) => {
+    const { id } = req.params;
+    const { prod_name, prod_desc, prod_price, prod_type, prod_ingredients, prod_calories, isdairyfree, isglutenfree, isvegetarian, isvegan, isnutfree, issugarfree, isseasonal } = req.body;
+    try {
+        const query = `
+            UPDATE product 
+            SET prod_name = ?, prod_desc = ?, prod_price = ?, prod_type = ?, prod_ingredients = ?, prod_calories = ?, isdairyfree = ?, isglutenfree = ?, isvegetarian = ?, isvegan = ?, isnutfree = ?, issugarfree = ?, isseasonal = ?
+            WHERE prod_id = ?`;
+        await db.query(query, [prod_name, prod_desc, prod_price, prod_type, prod_ingredients, prod_calories, isdairyfree, isglutenfree, isvegetarian, isvegan, isnutfree, issugarfree, isseasonal, id]);
+        res.json({ message: 'Product updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update product' });
+    }
+};
+
+// Delete a product
+exports.deleteProduct = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query('DELETE FROM product WHERE prod_id = ?', [id]);
+        res.json({ message: 'Product deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete product' });
+    }
+};
