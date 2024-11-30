@@ -4,13 +4,11 @@ import {
   Typography,
   TextField,
   Button,
-  IconButton,
 } from "@mui/material";
-import { Add, Remove } from "@mui/icons-material";
 
 const App = () => {
-  const [products, setProducts] = useState([]); // Fetch products dynamically
-  const [cart, setCart] = useState([]);
+  const [products, setProducts] = useState([]); // Product list from API
+  const [cart, setCart] = useState([]); // Cart state
 
   // Fetch products from the API
   useEffect(() => {
@@ -21,7 +19,7 @@ const App = () => {
           throw new Error(`Error fetching products: ${response.status}`);
         }
         const data = await response.json();
-        setProducts(data); // Dynamically set products from API
+        setProducts(data); // Populate product list from API
       } catch (error) {
         console.error(error.message);
       }
@@ -32,31 +30,37 @@ const App = () => {
 
   // Add to cart functionality
   const addToCart = (product) => {
-    setCart((prev) => {
-      const item = prev.find((p) => p.prod_id === product.prod_id);
-      if (item) {
-        return prev.map((p) =>
-          p.prod_id === product.prod_id
-            ? { ...p, quantity: p.quantity + 1 }
-            : p
+    setCart((prevCart) => {
+      const existingProduct = prevCart.find(
+        (item) => item.prod_id === product.prod_id
+      );
+      if (existingProduct) {
+        return prevCart.map((item) =>
+          item.prod_id === product.prod_id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prevCart, { ...product, quantity: 1 }];
     });
   };
 
-  // Remove from cart functionality
-  const removeFromCart = (prodId) => {
-    setCart((prev) =>
-      prev
+  // Remove one unit from cart
+  const removeFromCart = (productId) => {
+    setCart((prevCart) =>
+      prevCart
         .map((item) =>
-          item.prod_id === prodId
+          item.prod_id === productId
             ? { ...item, quantity: item.quantity - 1 }
             : item
         )
-        .filter((item) => item.quantity > 0)
+        .filter((item) => item.quantity > 0) // Remove items with 0 quantity
     );
   };
+
+  // Calculate total price
+  const calculateTotal = () =>
+    cart.reduce((total, item) => total + item.prod_price * item.quantity, 0);
 
   return (
     <Box
@@ -129,16 +133,16 @@ const App = () => {
 
         {/* Product Cards Section */}
         <Box
-          bgcolor="white" // Unified background for the product grid
+          bgcolor="white"
           padding="20px"
           margin="0 auto"
           borderRadius="10px"
           boxShadow="0px 4px 8px rgba(0, 0, 0, 0.1)"
-          maxWidth="1200px" // Set max-width to constrain background
+          maxWidth="1200px"
         >
           <Box
             display="grid"
-            gridTemplateColumns="repeat(auto-fill, minmax(250px, 1fr))" // Responsive columns
+            gridTemplateColumns="repeat(auto-fill, minmax(250px, 1fr))"
             gap="20px"
           >
             {products.map((product) => (
@@ -151,7 +155,7 @@ const App = () => {
                 textAlign="center"
               >
                 <img
-                  src={product.prod_image || "https://via.placeholder.com/100"} // Placeholder if no image is available
+                  src={product.prod_image || "https://via.placeholder.com/100"}
                   alt={product.prod_name}
                   style={{
                     width: "100%",
@@ -203,21 +207,34 @@ const App = () => {
               alignItems="center"
               marginBottom="10px"
             >
-              <Typography>{item.prod_name}</Typography>
+              <Typography>
+                {item.prod_name} x{item.quantity}
+              </Typography>
               <Box display="flex" alignItems="center" gap="10px">
-                <IconButton
-                  size="small"
+                <Button
                   onClick={() => removeFromCart(item.prod_id)}
+                  style={{
+                    backgroundColor: "#f44336",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    padding: "5px 10px",
+                  }}
                 >
-                  <Remove />
-                </IconButton>
-                <Typography>{item.quantity}</Typography>
-                <IconButton
-                  size="small"
+                  -
+                </Button>
+                <Button
                   onClick={() => addToCart(item)}
+                  style={{
+                    backgroundColor: "#4caf50",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    padding: "5px 10px",
+                  }}
                 >
-                  <Add />
-                </IconButton>
+                  +
+                </Button>
               </Box>
             </Box>
           ))
@@ -227,9 +244,7 @@ const App = () => {
         <Box marginTop="20px">
           <Typography fontWeight="bold">Total:</Typography>
           <Typography>
-            $ {cart
-              .reduce((acc, item) => acc + item.prod_price * item.quantity, 0)
-              .toFixed(2)}
+            $ {calculateTotal().toFixed(2)}
           </Typography>
         </Box>
       </Box>
