@@ -1,21 +1,32 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-} from "@mui/material";
+import { Box, Typography, TextField, Button } from "@mui/material";
+
+const TAX_RATE = 0.0975; // 9.75% tax
 
 const App = () => {
   const [products, setProducts] = useState([]); // Product list from API
   const [cart, setCart] = useState([]); // Cart state
 
-  // Mapping for custom names to images
-  const nameToImageMap = {
-    "BetterNowThanLatte": "/betternowthanlatte.jpg",
-    "Flat White Girl": "/flat-white-girl.jpg",
-    "Chai Latte": "/chai-latte.jpg",
-    // Add any other necessary mappings here
+  // Explicit mapping for custom product names
+  const resolveImagePath = (productName) => {
+    const nameToImageMap = {
+      "PolarEspresso": "/polar-espresso.jpg",
+      "AICappuccino": "/ai-cappuccino.jpg",
+      "BetterNowThanLatte": "/better-now-than-latte.jpg",
+      "Flat White Girl": "/flat-white.jpg",
+    };
+
+    if (nameToImageMap[productName]) {
+      return nameToImageMap[productName];
+    }
+
+    // Fallback to dynamically resolved paths
+    const formattedName = productName
+      .toLowerCase()
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/[^a-z0-9-]/g, ""); // Remove special characters
+
+    return `/${formattedName}.jpg`;
   };
 
   // Fetch products from the API
@@ -66,25 +77,15 @@ const App = () => {
     );
   };
 
-  // Calculate total price
-  const calculateTotal = () =>
+  // Calculate subtotal
+  const calculateSubtotal = () =>
     cart.reduce((total, item) => total + item.prod_price * item.quantity, 0);
 
-  // Resolve the image path for each product
-  const resolveImagePath = (productName) => {
-    // Check the mapping table first
-    if (nameToImageMap[productName]) {
-      return nameToImageMap[productName];
-    }
+  // Calculate tax
+  const calculateTax = () => calculateSubtotal() * TAX_RATE;
 
-    // Fallback to dynamically resolved paths
-    const formattedName = productName
-      .toLowerCase()
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
-      .replace(/[^a-z0-9-]/g, ""); // Remove special characters
-
-    return `/${formattedName}.jpg`;
-  };
+  // Calculate total including tax
+  const calculateGrandTotal = () => calculateSubtotal() + calculateTax();
 
   return (
     <Box
@@ -233,9 +234,10 @@ const App = () => {
               marginBottom="10px"
             >
               <Typography>
-                {item.prod_name} x{item.quantity}
+                {item.prod_name}
               </Typography>
               <Box display="flex" alignItems="center" gap="10px">
+                {/* Decrement Button */}
                 <Button
                   onClick={() => removeFromCart(item.prod_id)}
                   style={{
@@ -248,6 +250,13 @@ const App = () => {
                 >
                   -
                 </Button>
+
+                {/* Quantity */}
+                <Typography fontWeight="bold" style={{ minWidth: "30px", textAlign: "center" }}>
+                  x{item.quantity}
+                </Typography>
+
+                {/* Increment Button */}
                 <Button
                   onClick={() => addToCart(item)}
                   style={{
@@ -266,10 +275,21 @@ const App = () => {
         ) : (
           <Typography>No items in the cart.</Typography>
         )}
+
         <Box marginTop="20px">
-          <Typography fontWeight="bold">Total:</Typography>
-          <Typography>
-            $ {calculateTotal().toFixed(2)}
+          <Typography fontWeight="bold">Subtotal:</Typography>
+          <Typography>$ {calculateSubtotal().toFixed(2)}</Typography>
+
+          <Typography fontWeight="bold" marginTop="10px">
+            Tax (9.75%):
+          </Typography>
+          <Typography>$ {calculateTax().toFixed(2)}</Typography>
+
+          <Typography fontWeight="bold" marginTop="20px" fontSize="1.5rem">
+            Total:
+          </Typography>
+          <Typography fontWeight="bold" color="#28A745" fontSize="1.8rem">
+            $ {calculateGrandTotal().toFixed(2)}
           </Typography>
         </Box>
       </Box>
