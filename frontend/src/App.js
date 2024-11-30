@@ -62,6 +62,15 @@ const App = () => {
   const calculateTotal = () =>
     cart.reduce((total, item) => total + item.prod_price * item.quantity, 0);
 
+  // Resolve the image path for each product
+  const resolveImagePath = (productName) => {
+    const formattedName = productName
+      .toLowerCase()
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/[^a-z0-9-]/g, ""); // Remove special characters
+    return `/${formattedName}.jpg`;
+  };
+
   return (
     <Box
       display="flex"
@@ -155,8 +164,9 @@ const App = () => {
                 textAlign="center"
               >
                 <img
-                  src={product.prod_image || "https://via.placeholder.com/100"}
+                  src={resolveImagePath(product.prod_name)}
                   alt={product.prod_name}
+                  onError={(e) => (e.target.src = "/fallback.jpg")} // Default image on error
                   style={{
                     width: "100%",
                     height: "120px",
