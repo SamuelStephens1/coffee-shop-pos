@@ -6,7 +6,19 @@ import reportWebVitals from './reportWebVitals';
 import { ThemeProvider, createTheme } from '@mui/material/styles'; // Import ThemeProvider and createTheme
 
 // Create a default Material UI theme
-const theme = createTheme();
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2', // Default Material-UI primary color
+    },
+    secondary: {
+      main: '#dc004e', // Default Material-UI secondary color
+    },
+  },
+  typography: {
+    fontFamily: 'Arial, sans-serif', // Default font family
+  },
+});
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -21,4 +33,3 @@ root.render(
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
-

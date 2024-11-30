@@ -10,6 +10,14 @@ const App = () => {
   const [products, setProducts] = useState([]); // Product list from API
   const [cart, setCart] = useState([]); // Cart state
 
+  // Mapping for custom names to images
+  const nameToImageMap = {
+    "BetterNowThanLatte": "/betternowthanlatte.jpg",
+    "Flat White Girl": "/flat-white-girl.jpg",
+    "Chai Latte": "/chai-latte.jpg",
+    // Add any other necessary mappings here
+  };
+
   // Fetch products from the API
   useEffect(() => {
     const fetchProducts = async () => {
@@ -64,10 +72,17 @@ const App = () => {
 
   // Resolve the image path for each product
   const resolveImagePath = (productName) => {
+    // Check the mapping table first
+    if (nameToImageMap[productName]) {
+      return nameToImageMap[productName];
+    }
+
+    // Fallback to dynamically resolved paths
     const formattedName = productName
       .toLowerCase()
       .replace(/\s+/g, "-") // Replace spaces with hyphens
       .replace(/[^a-z0-9-]/g, ""); // Remove special characters
+
     return `/${formattedName}.jpg`;
   };
 
