@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, TextField, Button } from "@mui/material";
-import LogoutButton from "../components/LogoutButton"; // Import the LogoutButton
+import LogoutButton from "@components/LogoutButton";
 
 const LoyaltyPage = () => {
   console.log("Rendering LoyaltyPage");
