@@ -1,27 +1,29 @@
-const express = require('express'); // Import express
+const express = require("express"); // Import express
 const app = express(); // Initialize app
-require('dotenv').config();
-const cors = require('cors');
+require("dotenv").config(); // Load environment variables from .env file
+const cors = require("cors");
+
 app.use(cors());
 
-const PORT = process.env.PORT || 3001; // Changed to 3001
+const PORT = process.env.PORT || 3001; // Default to port 3001
 
-const apiRoutes = require('./routes/api'); // No changes needed if it's correct.
+// Import API routes
+const apiRoutes = require("./routes/api");
 
-// Middleware
+// Middleware for parsing JSON and URL-encoded data
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
 
-// Adjust middleware limits
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Adjust middleware limits to handle larger payloads
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Routes
-app.use('/api', apiRoutes); // Use API routes under /api path
+// API routes
+app.use("/api", apiRoutes); // Use API routes under /api path
 
-// Default route to test the server
-app.get('/', (req, res) => {
-  res.send('Coffee Shop POS Backend is running!');
+// Default route to verify the server is running
+app.get("/", (req, res) => {
+  res.send("Coffee Shop POS Backend is running!");
 });
 
 // Start the server

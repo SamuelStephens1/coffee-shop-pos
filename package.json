@@ -3,12 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "concurrently \"npm start --prefix backend\" \"npm start --prefix frontend\"",
-    "build": "npm run build --prefix frontend",
-    "install-all": "npm install && npm install --prefix backend && npm install --prefix frontend"
-  },
+  "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
+  "start-backend": "npm start --prefix backend",
+  "start-frontend": "cd frontend && react-app-rewired start",
+  "build": "npm run build-backend && npm run build-frontend",
+  "build-backend": "echo \"No backend build step configured\"",
+  "build-frontend": "cd frontend && react-app-rewired build",
+  "install-all": "npm install && npm install --prefix backend && npm install --prefix frontend",
+  "test": "cd frontend && react-app-rewired test",
+  "eject": "cd frontend && react-scripts eject"
+},
   "devDependencies": {
-    "concurrently": "^7.6.0"
+    "concurrently": "^7.6.0",
+    "react-app-rewired": "^2.2.1"
   },
   "resolutions": {
     "yargs-parser": "^20.0.0"
