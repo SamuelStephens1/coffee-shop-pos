@@ -1,20 +1,16 @@
 {
-    "name": "coffee-shop-pos",
-    "version": "1.0.0",
-    "private": true,
-    "scripts": {
-        "start": "concurrently \"npm start --prefix backend\" \"npm start --prefix frontend\""
-    },
-    "devDependencies": {
-        "concurrently": "^8.2.2"
-    },
-    "dependencies": {
-        "@emotion/react": "^11.13.5",
-        "@emotion/styled": "^11.13.5",
-        "@mui/icons-material": "^6.1.9",
-        "@mui/material": "^6.1.9",
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1",
-        "react-router-dom": "^7.0.1"
-    }
+  "name": "coffee-shop-pos",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "concurrently \"npm start --prefix backend\" \"npm start --prefix frontend\"",
+    "build": "npm run build --prefix frontend",
+    "install-all": "npm install && npm install --prefix backend && npm install --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "resolutions": {
+    "yargs-parser": "^20.0.0"
+  }
 }

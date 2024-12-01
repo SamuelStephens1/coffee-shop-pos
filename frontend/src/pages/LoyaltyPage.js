@@ -1,48 +1,74 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Box, Typography, TextField, Button } from "@mui/material";
+import LogoutButton from "../components/LogoutButton"; // Import the LogoutButton
 
 const LoyaltyPage = () => {
+  console.log("Rendering LoyaltyPage");
   const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [customer, setCustomer] = useState(null);
 
-  const handleSearch = async () => {
-    // Example of a loyalty query (replace with actual API call)
-    const response = await fetch(`/api/customers?phone=${phoneNumber}`);
-    if (response.ok) {
-      const data = await response.json();
-      setCustomer(data);
-    } else {
-      setCustomer(null);
-    }
+  const handleSearch = () => {
+    console.log(`Searching loyalty info for phone: ${phoneNumber}`);
   };
 
   const handleSkip = () => {
+    console.log("Skipping loyalty check");
     navigate("/pos");
   };
 
   return (
-    <div>
-      <h1>Loyalty Check</h1>
-      <input
-        type="text"
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChange={(e) => setPhoneNumber(e.target.value)}
-      />
-      <button onClick={handleSearch}>Search</button>
-      {customer ? (
-        <div>
-          <p>Customer Found: {customer.name}</p>
-          <button onClick={handleSkip}>Continue to POS</button>
-        </div>
-      ) : (
-        <div>
-          <p>No customer found.</p>
-          <button onClick={handleSkip}>Skip</button>
-        </div>
-      )}
-    </div>
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      height="100vh"
+      bgcolor="#f4f4f4"
+    >
+      <Box
+        width="400px"
+        bgcolor="white"
+        padding="30px"
+        borderRadius="10px"
+        boxShadow="0px 4px 8px rgba(0, 0, 0, 0.1)"
+      >
+        <Typography variant="h4" textAlign="center" marginBottom="20px">
+          Loyalty Check
+        </Typography>
+
+        <TextField
+          fullWidth
+          label="Phone Number"
+          variant="outlined"
+          margin="normal"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+        />
+
+        <Box display="flex" justifyContent="space-between" marginTop="20px">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSearch}
+          >
+            Search
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={handleSkip}
+          >
+            Skip
+          </Button>
+        </Box>
+
+        {/* Centered Logout Button */}
+        <Box display="flex" justifyContent="center" marginTop="20px">
+          <LogoutButton />
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
