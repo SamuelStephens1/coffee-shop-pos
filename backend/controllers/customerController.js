@@ -55,3 +55,21 @@ exports.deleteCustomer = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete customer' });
     }
 };
+// Get customer by phone number
+exports.getCustomerByPhone = async (req, res) => {
+    const { phone } = req.params;
+    try {
+        const [customer] = await db.query(
+            "SELECT * FROM customer WHERE cust_phone = ?",
+            [phone]
+        );
+        if (customer.length > 0) {
+            res.json(customer[0]);
+        } else {
+            res.status(404).json({ error: "Customer not found" });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to fetch customer by phone" });
+    }
+};

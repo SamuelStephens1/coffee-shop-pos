@@ -5,22 +5,16 @@
   "scripts": {
     "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
     "start-backend": "npm start --prefix backend",
-    "start-frontend": "cd frontend && react-app-rewired start",
+    "start-frontend": "npm start --prefix frontend",
     "build": "npm run build-backend && npm run build-frontend",
     "build-backend": "echo \"No backend build step configured\"",
-    "build-frontend": "cd frontend && react-app-rewired build",
+    "build-frontend": "cd frontend && react-scripts build",
     "install-all": "npm install && npm install --prefix backend && npm install --prefix frontend",
-    "test": "cd frontend && react-app-rewired test",
+    "test": "cd frontend && react-scripts test",
     "eject": "cd frontend && react-scripts eject"
   },
-  "devDependencies": {
+  "dependencies": {
     "concurrently": "^7.6.0",
-    "eslint": "^8.57.1",
-    "eslint-config-react-app": "^7.0.1",
-    "path": "^0.12.7",
     "react-app-rewired": "^2.2.1"
-  },
-  "resolutions": {
-    "yargs-parser": "^20.0.0"
   }
 }

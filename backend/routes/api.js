@@ -17,7 +17,34 @@ router.get("/customers", customerController.getAllCustomers);
 router.post("/customers", customerController.addCustomer);
 router.put("/customers/:id", customerController.updateCustomer);
 router.delete("/customers/:id", customerController.deleteCustomer);
-
+// Fetch customer by phone number
+// Get a customer by phone number
+router.get("/customers/phone/:phone", async (req, res) => {
+    const { phone } = req.params;
+    console.log("Received phone number:", phone);
+  
+    try {
+      const query = `
+        SELECT * 
+        FROM customer 
+        WHERE REPLACE(REPLACE(REPLACE(cust_phone, '-', ''), ' ', ''), '(', '') = ?
+      `;
+      const sanitizedPhone = phone.replace(/[^0-9]/g, ""); // Ensure phone is sanitized in the backend as well
+      console.log("Sanitized phone number for query:", sanitizedPhone);
+  
+      const [results] = await db.query(query, [sanitizedPhone]);
+      if (results.length > 0) {
+        res.json(results[0]);
+      } else {
+        res.status(404).json({ error: "Customer not found" });
+      }
+    } catch (error) {
+      console.error("Error fetching customer:", error.message);
+      res.status(500).json({ error: "Failed to fetch customer" });
+    }
+  });
+  
+  
 // Order routes
 router.get("/orders", orderController.getAllOrders);
 router.post("/orders", orderController.addOrder);

@@ -1,19 +1,42 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, TextField, Button } from "@mui/material";
-import LogoutButton from "@components/LogoutButton";
+import LogoutButton from "../components/LogoutButton"; // Fixed relative import
 
 const LoyaltyPage = () => {
-  console.log("Rendering LoyaltyPage");
   const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [error, setError] = useState(null);
 
-  const handleSearch = () => {
-    console.log(`Searching loyalty info for phone: ${phoneNumber}`);
+  const handleSearch = async () => {
+    console.log("Raw phone input:", phoneNumber);
+  
+    // Sanitize phone number
+    const sanitizedPhone = phoneNumber.replace(/[^0-9]/g, ""); // Remove all non-numeric characters
+    console.log("Sanitized phone number:", sanitizedPhone);
+  
+    try {
+      const response = await fetch(`/api/customers/phone/${sanitizedPhone}`);
+      console.log("API Response status:", response.status);
+      if (!response.ok) {
+        throw new Error("Customer not found");
+      }
+  
+      const data = await response.json();
+      console.log("Customer Data:", data);
+  
+      // Save customer info in localStorage or state
+      localStorage.setItem("customerInfo", JSON.stringify(data));
+      navigate("/pos");
+    } catch (error) {
+      console.error("Error fetching customer:", error.message);
+      // Handle error display
+    }
   };
+  
 
   const handleSkip = () => {
-    console.log("Skipping loyalty check");
+    localStorage.removeItem("customerInfo");
     navigate("/pos");
   };
 
@@ -46,24 +69,21 @@ const LoyaltyPage = () => {
           onChange={(e) => setPhoneNumber(e.target.value)}
         />
 
+        {error && (
+          <Typography color="error" textAlign="center" marginTop="10px">
+            {error}
+          </Typography>
+        )}
+
         <Box display="flex" justifyContent="space-between" marginTop="20px">
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSearch}
-          >
+          <Button variant="contained" color="primary" onClick={handleSearch}>
             Search
           </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={handleSkip}
-          >
+          <Button variant="outlined" color="secondary" onClick={handleSkip}>
             Skip
           </Button>
         </Box>
 
-        {/* Centered Logout Button */}
         <Box display="flex" justifyContent="center" marginTop="20px">
           <LogoutButton />
         </Box>
