@@ -65,30 +65,58 @@ router.post("/placeOrder", async (req, res) => {
     } = req.body;
   
     try {
-      // Validate the input payload
-      if (
-        !order_date ||
-        !customer_id ||
-        !store_id ||
-        !total_price ||
-        !total_quantity ||
-        !product_ids ||
-        !quantities
-      ) {
-        return res.status(400).json({ error: "Missing required parameters" });
+      // Check if the customer has a reward available
+      const [customer] = await db.query(
+        "SELECT reward_available FROM customer WHERE cust_id = ?",
+        [customer_id]
+      );
+  
+      if (customer.length === 0) {
+        return res.status(404).json({ error: "Customer not found" });
       }
   
-      // Call the PlaceOrder procedure
-      const query = `CALL PlaceOrder(?, ?, ?, ?, ?, ?, ?)`;
-      await db.query(query, [
+      let hasReward = customer[0].reward_available > 0;
+      let adjustedTotalPrice = total_price;
+  
+      if (hasReward) {
+        // Identify the most expensive product in the order
+        const productIdArray = product_ids.split(",");
+        const quantityArray = quantities.split(",");
+  
+        const productPrices = await Promise.all(
+          productIdArray.map(async (productId) => {
+            const [product] = await db.query(
+              "SELECT prod_price FROM product WHERE prod_id = ?",
+              [productId]
+            );
+            return product[0]?.prod_price || 0;
+          })
+        );
+  
+        const maxPrice = Math.max(...productPrices);
+        const maxPriceIndex = productPrices.indexOf(maxPrice);
+  
+        if (maxPriceIndex !== -1) {
+          // Adjust the total price to deduct the most expensive item's price
+          adjustedTotalPrice -= maxPrice * quantityArray[maxPriceIndex];
+        }
+      }
+  
+      // Call PlaceOrder stored procedure
+      await db.query("CALL PlaceOrder(?, ?, ?, ?, ?, ?, ?)", [
         order_date,
         customer_id,
         store_id,
-        total_price,
+        adjustedTotalPrice,
         total_quantity,
         product_ids,
         quantities,
       ]);
+  
+      if (hasReward) {
+        // Reset customer's reward available
+        await db.query("UPDATE customer SET reward_available = 0 WHERE cust_id = ?", [customer_id]);
+      }
   
       res.status(200).json({ message: "Order placed successfully" });
     } catch (error) {
@@ -96,6 +124,7 @@ router.post("/placeOrder", async (req, res) => {
       res.status(500).json({ error: "Failed to place order" });
     }
   });
+  
   
 
 module.exports = router;

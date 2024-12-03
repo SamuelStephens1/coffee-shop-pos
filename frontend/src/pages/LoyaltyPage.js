@@ -14,23 +14,36 @@ const LoyaltyPage = () => {
       if (!response.ok) {
         throw new Error("Customer not found");
       }
-  
+
       const customerData = await response.json();
       console.log("Customer data fetched:", customerData);
-  
+
       navigate("/pos", { state: { customer: customerData } });
-        console.log("Navigating to POSPage with state:", { customer: customerData });
- // Pass customer data
+      console.log("Navigating to POSPage with state:", { customer: customerData });
     } catch (error) {
       console.error("Error fetching customer:", error);
       alert("Customer not found. Please try again.");
     }
   };
-  
-  const handleSkip = () => {
-    navigate("/pos", { state: { customer: null } }); // Pass empty state for a skipped customer
+
+  const handleSkip = async () => {
+    try {
+      const response = await fetch(`/api/customers/phone/9999999999`); // Fetch customer by phone number
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch default customer");
+      }
+
+      const defaultCustomer = await response.json();
+      console.log("Default customer fetched:", defaultCustomer);
+
+      // Navigate to POSPage with the default customer
+      navigate("/pos", { state: { customer: defaultCustomer } });
+    } catch (error) {
+      console.error("Error fetching default customer:", error);
+      alert("Unable to proceed. Please try again.");
+    }
   };
-  
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
@@ -81,7 +94,7 @@ const LoyaltyPage = () => {
           <Button
             variant="outlined"
             color="secondary"
-            onClick={() => navigate("/pos")}
+            onClick={handleSkip} // Trigger Skip Functionality
           >
             Skip
           </Button>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Box, Typography, TextField, Button } from "@mui/material";
+import { Box, Typography, Button, Modal } from "@mui/material";
 import LogoutButton from "../components/LogoutButton";
 
 const TAX_RATE = 0.0975; // 9.75% tax
@@ -10,27 +10,16 @@ const POSPage = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
+  const [rewardApplied, setRewardApplied] = useState(0);
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const customer = location.state?.customer;
 
-  useEffect(() => {
-    console.log("Customer info passed to POSPage:", customer);
-    console.log("Location state:", location.state);
-  }, [customer]);
-
-  useEffect(() => {
-    if (!customer) {
-      console.log("No customer info, redirecting to LoyaltyPage.");
-      navigate("/loyalty");
-    }
-  }, [customer, navigate]);
-
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const response = await fetch("/api/products");
-        if (!response.ok) {
-          throw new Error(`Error fetching products: ${response.status}`);
-        }
+        if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
         setProducts(data);
       } catch (error) {
@@ -40,12 +29,19 @@ const POSPage = () => {
     fetchProducts();
   }, []);
 
+  // Redirect to LoyaltyPage if customer is undefined
+  useEffect(() => {
+    if (!customer) {
+      console.log("No customer info, redirecting to LoyaltyPage.");
+      navigate("/loyalty");
+    }
+  }, [customer, navigate]);
+
+  // Add product to cart
   const addToCart = (product) => {
     setCart((prevCart) => {
-      const existingProduct = prevCart.find(
-        (item) => item.prod_id === product.prod_id
-      );
-      if (existingProduct) {
+      const existing = prevCart.find((item) => item.prod_id === product.prod_id);
+      if (existing) {
         return prevCart.map((item) =>
           item.prod_id === product.prod_id
             ? { ...item, quantity: item.quantity + 1 }
@@ -56,6 +52,7 @@ const POSPage = () => {
     });
   };
 
+  // Remove product from cart
   const removeFromCart = (productId) => {
     setCart((prevCart) =>
       prevCart
@@ -68,53 +65,72 @@ const POSPage = () => {
     );
   };
 
+  // Calculate totals
   const calculateSubtotal = () =>
     cart.reduce((total, item) => total + item.prod_price * item.quantity, 0);
 
   const calculateTax = () => calculateSubtotal() * TAX_RATE;
 
-  const calculateGrandTotal = () => calculateSubtotal() + calculateTax();
+  const calculateGrandTotal = () =>
+    calculateSubtotal() + calculateTax() - rewardApplied;
 
-  const calculateTotalQuantity = () =>
-    cart.reduce((total, item) => total + item.quantity, 0);
+  // Apply reward
+  const applyReward = () => {
+    if (customer?.reward_available > 0 && cart.length > 0) {
+      const highestItem = [...cart].sort((a, b) => b.prod_price - a.prod_price)[0];
+      setRewardApplied(highestItem.prod_price);
+    } else {
+      setRewardApplied(0);
+    }
+  };
 
+  // Submit order
   const submitOrder = async () => {
     try {
-      const totalPrice = calculateGrandTotal().toFixed(2);
-      const totalQuantity = calculateTotalQuantity();
-
       const productIds = cart.map((item) => item.prod_id).join(",");
       const quantities = cart.map((item) => item.quantity).join(",");
-
-      if (!customer) {
-        throw new Error("Customer information is missing!");
-      }
-
       const response = await fetch("/api/placeOrder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          order_date: new Date().toISOString().split("T")[0], // Format as YYYY-MM-DD
+          order_date: new Date().toISOString().split("T")[0],
           customer_id: customer.cust_id,
           store_id: customer.store_id,
-          total_price: parseFloat(totalPrice),
-          total_quantity: totalQuantity,
+          total_price: calculateGrandTotal(),
+          total_quantity: cart.reduce((sum, item) => sum + item.quantity, 0),
           product_ids: productIds,
           quantities: quantities,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to submit order");
-      }
-
+      if (!response.ok) throw new Error("Failed to submit order");
       console.log("Order submitted successfully");
-      setCart([]); // Clear the cart
-      navigate("/loyalty");
+      await resetRewardCounter(); // Reset rewards after submitting
+      setCart([]);
+      closeReceipt();
     } catch (error) {
       console.error("Error submitting order:", error);
     }
   };
+
+  const resetRewardCounter = async () => {
+    try {
+      const response = await fetch(`/api/resetRewards/${customer.cust_id}`, {
+        method: "PUT",
+      });
+      if (!response.ok) throw new Error("Failed to reset rewards");
+      console.log("Rewards reset successfully.");
+    } catch (error) {
+      console.error("Error resetting rewards:", error);
+    }
+  };
+
+  // Handle receipt modal
+  const openReceipt = () => {
+    applyReward();
+    setReceiptOpen(true);
+  };
+
+  const closeReceipt = () => setReceiptOpen(false);
 
   return (
     <Box display="flex" height="100vh" bgcolor="#F4F4F4">
@@ -158,11 +174,18 @@ const POSPage = () => {
               Name: {customer.cust_fname} {customer.cust_lname}
             </Typography>
             <Typography>Phone: {customer.cust_phone}</Typography>
-            <Typography>Rewards Available: {customer.reward_available || 0}</Typography>
+            <Typography>
+              Rewards Available: {customer.reward_available || 0}
+            </Typography>
           </Box>
         )}
 
-        <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap="20px">
+        {/* Product Grid */}
+        <Box
+          display="grid"
+          gridTemplateColumns="repeat(auto-fill, minmax(200px, 1fr))"
+          gap="20px"
+        >
           {products.map((product) => (
             <Box
               key={product.prod_id}
@@ -227,12 +250,7 @@ const POSPage = () => {
                 >
                   -
                 </Button>
-                <Typography
-                  fontWeight="bold"
-                  style={{ minWidth: "30px", textAlign: "center" }}
-                >
-                  x{item.quantity}
-                </Typography>
+                <Typography fontWeight="bold">x{item.quantity}</Typography>
                 <Button
                   onClick={() => addToCart(item)}
                   style={{
@@ -257,12 +275,50 @@ const POSPage = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={submitOrder}
+          onClick={openReceipt}
           style={{ marginTop: "20px", width: "100%" }}
         >
-          Submit Order
+          Checkout
         </Button>
       </Box>
+
+      {/* Receipt Modal */}
+      <Modal open={receiptOpen} onClose={closeReceipt}>
+        <Box
+          bgcolor="white"
+          padding="20px"
+          borderRadius="8px"
+          width="400px"
+          margin="50px auto"
+        >
+          <Typography variant="h6" fontWeight="bold">
+            Receipt
+          </Typography>
+          <Box marginTop="10px" marginBottom="10px">
+            <Typography>Items:</Typography>
+            {cart.map((item) => (
+              <Typography key={item.prod_id}>
+                {item.prod_name} x{item.quantity} - $
+                {(item.prod_price * item.quantity).toFixed(2)}
+              </Typography>
+            ))}
+          </Box>
+          <Typography>Subtotal: ${calculateSubtotal().toFixed(2)}</Typography>
+          <Typography>Tax: ${calculateTax().toFixed(2)}</Typography>
+          <Typography style={{ color: "green" }}>
+            Reward Applied: -${rewardApplied.toFixed(2)}
+          </Typography>
+          <Typography>Total: ${calculateGrandTotal().toFixed(2)}</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={submitOrder}
+            style={{ marginTop: "20px", width: "100%" }}
+          >
+            Complete Order
+          </Button>
+        </Box>
+      </Modal>
     </Box>
   );
 };
