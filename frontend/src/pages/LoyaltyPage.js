@@ -1,43 +1,41 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, TextField, Button } from "@mui/material";
-import LogoutButton from "../components/LogoutButton"; // Fixed relative import
+import LogoutButton from "../components/LogoutButton";
 
 const LoyaltyPage = () => {
   const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
   const handleSearch = async () => {
-    console.log("Raw phone input:", phoneNumber);
-  
-    // Sanitize phone number
-    const sanitizedPhone = phoneNumber.replace(/[^0-9]/g, ""); // Remove all non-numeric characters
-    console.log("Sanitized phone number:", sanitizedPhone);
-  
     try {
-      const response = await fetch(`/api/customers/phone/${sanitizedPhone}`);
-      console.log("API Response status:", response.status);
+      const response = await fetch(`/api/customers/phone/${phoneNumber}`);
       if (!response.ok) {
         throw new Error("Customer not found");
       }
   
-      const data = await response.json();
-      console.log("Customer Data:", data);
+      const customerData = await response.json();
+      console.log("Customer data fetched:", customerData);
   
-      // Save customer info in localStorage or state
-      localStorage.setItem("customerInfo", JSON.stringify(data));
-      navigate("/pos");
+      navigate("/pos", { state: { customer: customerData } });
+        console.log("Navigating to POSPage with state:", { customer: customerData });
+ // Pass customer data
     } catch (error) {
-      console.error("Error fetching customer:", error.message);
-      // Handle error display
+      console.error("Error fetching customer:", error);
+      alert("Customer not found. Please try again.");
     }
   };
   
-
   const handleSkip = () => {
-    localStorage.removeItem("customerInfo");
-    navigate("/pos");
+    navigate("/pos", { state: { customer: null } }); // Pass empty state for a skipped customer
+  };
+  
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
   };
 
   return (
@@ -67,6 +65,7 @@ const LoyaltyPage = () => {
           margin="normal"
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
+          onKeyPress={handleKeyPress} // Trigger search on Enter
         />
 
         {error && (
@@ -79,11 +78,16 @@ const LoyaltyPage = () => {
           <Button variant="contained" color="primary" onClick={handleSearch}>
             Search
           </Button>
-          <Button variant="outlined" color="secondary" onClick={handleSkip}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => navigate("/pos")}
+          >
             Skip
           </Button>
         </Box>
 
+        {/* Centered Logout Button */}
         <Box display="flex" justifyContent="center" marginTop="20px">
           <LogoutButton />
         </Box>
